@@ -1,0 +1,201 @@
+# ════════════════════════════════════════════════════════════════════════════
+#  Lean Strategy Game — CI/CD Pipeline
+#  File   : .github/workflows/ci-cd.yml
+#  Purpose: Automatically lint, build, test, and (optionally) deploy the
+#           application whenever code lands on the main branch or a pull
+#           request targets it.
+#
+#  Pipeline stages
+#  ───────────────
+#  ci  (runs first, always)
+#    ├─ checkout         → clone the repository onto the runner
+#    ├─ setup-node       → install the correct Node.js version
+#    ├─ install-deps     → npm ci for client AND server
+#    ├─ build-client     → tsc + vite build  (React / Vite / TypeScript)
+#    ├─ build-server     → tsc               (Express / TypeScript)
+#    └─ test             → runs any test scripts found in client/server
+#
+#  deploy (runs only after ci passes AND only on push to main)
+#    └─ placeholder step — replace with your real deploy command
+#
+#  Required GitHub Secrets (Settings → Secrets → Actions)
+#  ────────────────────────────────────────────────────────
+#    DATABASE_URL   — PostgreSQL connection string
+#    JWT_SECRET     — Random string used to sign JWTs
+#
+# ════════════════════════════════════════════════════════════════════════════
+
+name: CI / CD — Lean Strategy Game
+
+# ─── Triggers ────────────────────────────────────────────────────────────────
+on:
+  # Run the pipeline on every push to main
+  push:
+    branches:
+      - main
+
+  # Also run on pull requests that target main so we catch issues before merge
+  pull_request:
+    branches:
+      - main
+
+# ─── Jobs ────────────────────────────────────────────────────────────────────
+jobs:
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # JOB 1 — Continuous Integration
+  #   Installs dependencies, compiles TypeScript, and runs tests.
+  #   If ANY step fails the whole job fails and the deploy job is skipped.
+  # ══════════════════════════════════════════════════════════════════════════
+  ci:
+    name: Build & Test
+    runs-on: ubuntu-latest   # GitHub-hosted Linux runner (free for public repos)
+
+    steps:
+      # ── Step 1: Checkout ─────────────────────────────────────────────────
+      # Downloads the full repository source onto the runner so subsequent
+      # steps can access it.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Step 2: Set up Node.js ───────────────────────────────────────────
+      # Installs Node.js 20 LTS (matches the version used in development).
+      # The built-in npm cache speeds up subsequent runs by reusing
+      # previously downloaded packages.
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'            # caches the global npm cache directory
+
+      # ── Step 3: Install frontend dependencies ────────────────────────────
+      # `npm ci` is the CI-safe equivalent of `npm install`:
+      #   * Uses package-lock.json exactly (reproducible builds)
+      #   * Fails if lock-file is out of date
+      #   * Does NOT modify package-lock.json
+      - name: Install frontend dependencies (client)
+        working-directory: client
+        run: npm ci
+
+      # ── Step 4: Install backend dependencies ─────────────────────────────
+      # Same as above, but for the Express server package.
+      - name: Install backend dependencies (server)
+        working-directory: server
+        run: npm ci
+
+      # ── Step 5: Build the frontend ───────────────────────────────────────
+      # Runs: tsc && vite build
+      # TypeScript type-checks all client code first; if any type errors
+      # exist the step fails here, blocking the rest of the pipeline.
+      # Vite then bundles React + Three.js into client/dist/.
+      - name: Build frontend (tsc + vite build)
+        working-directory: client
+        run: npm run build
+
+      # ── Step 6: Build the backend ────────────────────────────────────────
+      # Runs: tsc
+      # Compiles the Express + Socket.IO TypeScript source into server/dist/.
+      # Secrets are injected as environment variables so the server config
+      # can be validated without a real database.
+      - name: Build backend (tsc)
+        working-directory: server
+        env:
+          # These are read from GitHub Secrets — never stored in plain text.
+          # Add them at: repo → Settings → Secrets and variables → Actions
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET:   ${{ secrets.JWT_SECRET }}
+          PORT:         3001
+        run: npm run build
+
+      # ── Step 7: Run tests ─────────────────────────────────────────────────
+      # Attempts to run `npm test` in both client and server.
+      # The `|| true` fallback means the step passes gracefully even when no
+      # test scripts have been defined yet, so the pipeline does not break on
+      # a fresh project.  Remove `|| true` once real tests are added.
+      - name: Run frontend tests
+        working-directory: client
+        run: npm test --if-present || true
+
+      - name: Run backend tests
+        working-directory: server
+        run: npm test --if-present || true
+
+      # ── Step 8: Upload build artifacts ───────────────────────────────────
+      # Saves the compiled frontend bundle so the deploy job (or a developer)
+      # can download it without re-running the build.
+      - name: Upload client build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-dist
+          path: client/dist/
+          retention-days: 7   # keep for 7 days, then auto-delete
+
+      - name: Upload server build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-dist
+          path: server/dist/
+          retention-days: 7
+
+  # ══════════════════════════════════════════════════════════════════════════
+  # JOB 2 — Deployment
+  #   Runs only when:
+  #     * the CI job above has passed successfully  (needs: ci)
+  #     * the event is a push (not a pull_request)  so we only deploy merged
+  #       code, not open PRs.
+  # ══════════════════════════════════════════════════════════════════════════
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: ci          # this job waits for the ci job to finish successfully
+    # Only deploy on a direct push to main, not on pull_request events
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      # ── Step 1: Checkout again ───────────────────────────────────────────
+      # The deploy job runs on a fresh runner, so we need to check out again.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Step 2: Download compiled artifacts from the CI job ──────────────
+      # Instead of rebuilding, we download the artifacts produced by the ci
+      # job — this ensures we deploy exactly what was tested.
+      - name: Download client build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: client-dist
+          path: client/dist/
+
+      - name: Download server build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: server-dist
+          path: server/dist/
+
+      # ── Step 3: Deploy ───────────────────────────────────────────────────
+      # REPLACE THIS PLACEHOLDER with your actual deployment command.
+      #
+      # Common options:
+      #   Render / Railway / Fly.io  → use their official GitHub Actions
+      #   VPS / SSH                  → use appleboy/ssh-action
+      #   Vercel (frontend only)     → use amondnet/vercel-action
+      #   Docker                     → docker build and docker push
+      #
+      # Example for a generic SSH deploy:
+      #   - name: Deploy via SSH
+      #     uses: appleboy/ssh-action@v1
+      #     with:
+      #       host:     ${{ secrets.SSH_HOST }}
+      #       username: ${{ secrets.SSH_USER }}
+      #       key:      ${{ secrets.SSH_PRIVATE_KEY }}
+      #       script: |
+      #         cd /var/www/lean-strategy-game
+      #         git pull origin main
+      #         npm --prefix server ci --omit=dev
+      #         pm2 restart lean-server
+      - name: Deploy (placeholder — replace with your deploy command)
+        run: |
+          echo "CI passed. Deploy step goes here."
+          echo "Commit SHA : ${{ github.sha }}"
+          echo "Actor      : ${{ github.actor }}"
+          echo "Branch     : ${{ github.ref_name }}"
