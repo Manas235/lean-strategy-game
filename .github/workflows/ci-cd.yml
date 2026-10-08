@@ -2,7 +2,7 @@
 #  Lean Strategy Game — CI/CD Pipeline
 #  File   : .github/workflows/ci-cd.yml
 #  Purpose: Automatically lint, build, test, and (optionally) deploy the
-#           application whenever code lands on the main branch or a pull
+#           application whenever code lands on the master branch or a pull
 #           request targets it.
 #
 #  Pipeline stages
@@ -15,7 +15,7 @@
 #    ├─ build-server     → tsc               (Express / TypeScript)
 #    └─ test             → runs any test scripts found in client/server
 #
-#  deploy (runs only after ci passes AND only on push to main)
+#  deploy (runs only after ci passes AND only on push to master)
 #    └─ placeholder step — replace with your real deploy command
 #
 #  Required GitHub Secrets (Settings → Secrets → Actions)
@@ -29,15 +29,15 @@ name: CI / CD — Lean Strategy Game
 
 # ─── Triggers ────────────────────────────────────────────────────────────────
 on:
-  # Run the pipeline on every push to main
+  # Run the pipeline on every push to master
   push:
     branches:
-      - main
+      - master
 
-  # Also run on pull requests that target main so we catch issues before merge
+  # Also run on pull requests that target master so we catch issues before merge
   pull_request:
     branches:
-      - main
+      - master
 
 # ─── Jobs ────────────────────────────────────────────────────────────────────
 jobs:
@@ -148,8 +148,8 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     needs: ci          # this job waits for the ci job to finish successfully
-    # Only deploy on a direct push to main, not on pull_request events
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Only deploy on a direct push to master, not on pull_request events
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
 
     steps:
       # ── Step 1: Checkout again ───────────────────────────────────────────
@@ -190,7 +190,7 @@ jobs:
       #       key:      ${{ secrets.SSH_PRIVATE_KEY }}
       #       script: |
       #         cd /var/www/lean-strategy-game
-      #         git pull origin main
+      #         git pull origin master
       #         npm --prefix server ci --omit=dev
       #         pm2 restart lean-server
       - name: Deploy (placeholder — replace with your deploy command)
