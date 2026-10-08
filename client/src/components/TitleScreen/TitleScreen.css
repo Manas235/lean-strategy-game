@@ -1,0 +1,236 @@
+/* ───────────────────────────────────────────────────────
+   TitleScreen.css  –  Full-screen animated intro overlay
+   ─────────────────────────────────────────────────────── */
+
+/* Container */
+.title-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 60%, #0a0a1f 0%, #030308 70%);
+  overflow: hidden;
+
+  /* Phase transitions */
+  opacity: 0;
+  transform: scale(1.03);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.title-screen--main {
+  opacity: 1;
+  transform: scale(1);
+}
+.title-screen--exit {
+  opacity: 0;
+  transform: scale(0.96);
+  pointer-events: none;
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+/* Canvas background */
+.title-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ── Corner brackets ── */
+.title-corner {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  opacity: 0.55;
+}
+.title-corner--tl { top: 20px; left: 20px; border-top: 2px solid #00f3ff; border-left: 2px solid #00f3ff; }
+.title-corner--tr { top: 20px; right: 20px; border-top: 2px solid #00f3ff; border-right: 2px solid #00f3ff; }
+.title-corner--bl { bottom: 20px; left: 20px; border-bottom: 2px solid #00f3ff; border-left: 2px solid #00f3ff; }
+.title-corner--br { bottom: 20px; right: 20px; border-bottom: 2px solid #00f3ff; border-right: 2px solid #00f3ff; }
+
+/* ── Content wrapper ── */
+.title-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  text-align: center;
+  padding: 0 24px;
+}
+
+/* ── Badge ── */
+.title-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 18px;
+  border: 1px solid rgba(0, 243, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(0, 243, 255, 0.07);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #00f3ff;
+  text-transform: uppercase;
+  animation: slideUp 0.7s 0.2s both;
+}
+.title-badge__icon { font-size: 14px; animation: spin 4s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Logo ── */
+.title-logo-wrap {
+  animation: slideUp 0.7s 0.35s both;
+}
+.title-logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(54px, 9vw, 100px);
+  font-weight: 900;
+  letter-spacing: 6px;
+  line-height: 1;
+  text-transform: uppercase;
+  margin: 0;
+}
+.title-logo__lean {
+  color: #00f3ff;
+  text-shadow: 0 0 20px #00f3ff, 0 0 60px rgba(0,243,255,0.4), 0 0 120px rgba(0,243,255,0.15);
+  animation: logoPulse 2.5s ease-in-out infinite;
+}
+.title-logo__ops {
+  color: #ffffff;
+  text-shadow: 0 0 15px rgba(255,255,255,0.3);
+}
+.title-logo__ai {
+  color: #9d00ff;
+  text-shadow: 0 0 20px #9d00ff, 0 0 60px rgba(157,0,255,0.4);
+}
+@keyframes logoPulse {
+  0%, 100% { text-shadow: 0 0 20px #00f3ff, 0 0 60px rgba(0,243,255,0.4), 0 0 120px rgba(0,243,255,0.15); }
+  50%       { text-shadow: 0 0 30px #00f3ff, 0 0 80px rgba(0,243,255,0.55), 0 0 150px rgba(0,243,255,0.25); }
+}
+
+.title-logo__tagline {
+  margin-top: 10px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(13px, 1.6vw, 18px);
+  letter-spacing: 3px;
+  color: rgba(232, 232, 240, 0.55);
+  text-transform: uppercase;
+}
+
+/* ── Principles ticker ── */
+.title-principles {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideUp 0.7s 0.5s both;
+}
+.title-principles__label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(0,243,255,0.5);
+}
+.title-principles__text {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: #00ff88;
+  text-shadow: 0 0 10px rgba(0,255,136,0.4);
+  animation: principleIn 0.4s ease both;
+}
+@keyframes principleIn {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Feature pills ── */
+.title-features {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  animation: slideUp 0.7s 0.65s both;
+}
+.title-feature-pill {
+  padding: 6px 14px;
+  border: 1px solid rgba(157, 0, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(157, 0, 255, 0.08);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: rgba(232, 232, 240, 0.8);
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.title-feature-pill:hover {
+  background: rgba(157, 0, 255, 0.22);
+  border-color: rgba(157, 0, 255, 0.7);
+  color: #fff;
+}
+
+/* ── CTA Button ── */
+.title-cta {
+  position: relative;
+  padding: 18px 56px;
+  border: 2px solid #00f3ff;
+  border-radius: 8px;
+  background: rgba(0, 243, 255, 0.1);
+  cursor: pointer;
+  overflow: hidden;
+  animation: slideUp 0.7s 0.8s both;
+  transition: background 0.25s, box-shadow 0.25s, transform 0.15s;
+}
+.title-cta:hover {
+  background: rgba(0, 243, 255, 0.22);
+  box-shadow: 0 0 30px rgba(0,243,255,0.45), 0 0 80px rgba(0,243,255,0.15);
+  transform: translateY(-2px);
+}
+.title-cta:active { transform: translateY(0); }
+
+.title-cta__text {
+  position: relative;
+  z-index: 1;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(13px, 1.8vw, 17px);
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #00f3ff;
+  text-shadow: 0 0 10px rgba(0,243,255,0.6);
+}
+.title-cta__glow {
+  position: absolute;
+  inset: -2px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, transparent, rgba(0,243,255,0.15), transparent);
+  animation: ctaSweep 2.5s linear infinite;
+}
+@keyframes ctaSweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+/* ── Hint text ── */
+.title-hint {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: rgba(136, 136, 170, 0.55);
+  animation: slideUp 0.7s 0.95s both;
+}
+
+/* ── Version stamp ── */
+.title-version {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: rgba(136,136,170,0.35);
+}

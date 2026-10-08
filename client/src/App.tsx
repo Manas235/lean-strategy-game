@@ -12,9 +12,11 @@ import { EventTimeline } from './components/Timeline/EventTimeline';
 import { ProjectSetupModal } from './components/Project/ProjectSetupModal';
 import { useSocket } from './hooks/useSocket';
 import { useGameStore } from './store/gameStore';
+import { TitleScreen } from './components/TitleScreen/TitleScreen';
 
 function App() {
   const store = useGameStore();
+  const showTitleScreen = useGameStore((s) => s.showTitleScreen);
   useSocket();
 
   // Load initial data from backend
@@ -74,6 +76,8 @@ function App() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
+      {/* Title screen – shown on first load */}
+      {showTitleScreen && <TitleScreen />}
       {/* 3D Factory Background */}
       <FactoryScene />
 

@@ -116,6 +116,8 @@ interface GameStore {
   xpPopups: XPPopup[];
   showLevelUp: boolean;
   activePanel: string | null;
+  showTitleScreen: boolean;
+  setShowTitleScreen: (show: boolean) => void;
 
   // Actions
   setTasks: (tasks: Task[]) => void;
@@ -313,6 +315,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   xpPopups: [],
   showLevelUp: false,
   activePanel: null,
+  showTitleScreen: true,
+  setShowTitleScreen: (show) => set({ showTitleScreen: show }),
 
   setTasks: (tasks) => {
     if (Array.isArray(tasks) && tasks.length > 0) set({ tasks });
