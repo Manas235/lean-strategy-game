@@ -1,10 +1,13 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "module": "Node16",
+    // rootDirs (plural) tells TypeScript that both ./src and ../shared are
+    // valid source roots. This resolves TS6059 which fires when rootDir is
+    // a single directory (./src) but included files live in ../shared.
+    "rootDirs": ["./src", "../shared"],
+    "moduleResolution": "node16",
     "outDir": "./dist",
-    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
